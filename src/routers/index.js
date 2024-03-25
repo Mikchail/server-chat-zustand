@@ -13,6 +13,7 @@ router.post("/auth", body("email").isEmail(),
 router.post("/users", authMiddleware, UserController.getUser)
 router.get("/user/me", authMiddleware, UserController.getUserMe)
 router.get("/users", authMiddleware, UserController.getUsers)
+router.post("/refresh", UserController.refresh)
 
 router.post("/room", authMiddleware, RoomController.createRoom) 
 router.post("/rooms", authMiddleware, RoomController.getRooms)

@@ -18,7 +18,7 @@ class UserService {
     const isMatch = await bcrypt.compare(password, user.password);
     if (isMatch) {
       const userDto = new UserDto(user);
-      const tokens = tokenService.generateToken({ ...userDto });
+      const tokens = tokenService.generateTokens({ ...userDto });
       await tokenService.saveToken(userDto.id, tokens.refreshToken);
       return {
         user: { ...userDto, ...tokens },
@@ -41,7 +41,7 @@ class UserService {
     const hash = await bcrypt.hash(password, salt);
     const user = (await UserModel.create({ email, password: hash })).toJSON();
     const userDto = new UserDto(user);
-    const tokens = tokenService.generateToken({ ...userDto });
+    const tokens = tokenService.generateTokens({ ...userDto });
     await tokenService.saveToken(userDto.id, tokens.refreshToken);
 
     return { ...userDto, ...tokens };

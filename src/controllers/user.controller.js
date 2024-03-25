@@ -2,6 +2,7 @@ const userService = require("../services/user.service");
 const { validationResult } = require("express-validator");
 const ApiError = require("../exeptions/ApiError");
 const UserDto = require("../dtos/user.dto");
+const tokenService = require("../services/token.service");
 class UsersController {
   async login(req, res, next) {
     try {
@@ -39,6 +40,12 @@ class UsersController {
 
   async refresh(req, res, next) {
     try {
+      const { refreshToken } = req.body;
+      if(!refreshToken){
+        return res.json({error: "not refreshToken"});
+      }
+      const accessToken = await tokenService.refresh(refreshToken);
+      return res.json({accessToken});
     } catch (error) {
       next(error);
     }

@@ -10,12 +10,10 @@ module.exports = async function (req, res, next) {
       return next(ApiError.UnauthorizedError());
     }
     const accessToken = authorizationHeader.split(" ")[1];
-    console.log("accessToken", accessToken);
     if (!accessToken) {
       return next(ApiError.UnauthorizedError());
     }
     const userDate = await tokenService.validateAccessToken(accessToken);
-    console.log("userDate", userDate);
     if (!userDate) {
       return next(ApiError.UnauthorizedError());
     }
@@ -23,7 +21,6 @@ module.exports = async function (req, res, next) {
     req.user = userDate
     next();
   } catch (error) {
-    console.log(error)
     return next(ApiError.UnauthorizedError());
   }
 }

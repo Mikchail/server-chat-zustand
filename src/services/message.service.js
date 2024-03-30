@@ -2,6 +2,7 @@ const MessageModel = require("../models").models.Message;
 const RoomModel = require("../models").models.Room;
 const UserModel = require("../models").models.User;
 const RoomUser = require("../models").models.RoomUser;
+const { Op } = require("sequelize");
 const UserDto = require("../dtos/user.dto");
 const ApiError = require("../exeptions/ApiError");
 
@@ -14,7 +15,6 @@ class MessageService {
       await MessageModel.create(
         { text, userId, roomId },
         {
-            // not work
           include: {
             model: UserModel,
             as: "user",
@@ -22,11 +22,11 @@ class MessageService {
         }
       )
     ).toJSON();
-    console.log({ message });
     return message;
   }
 
-  async getMessages(userId, roomId) {
+  async getMessages({ limit, offset, loadedMessageIds, userId, roomId }) {
+    console.log("loadedMessageIds", loadedMessageIds);
     if (!userId || !roomId) {
       return { error: "нету данных" };
     }
@@ -37,22 +37,36 @@ class MessageService {
       },
     });
     if (roomUsers) {
-      const messages = await MessageModel.findAll({
+      //   const loadedU = loadedMessageIds?.length
+      //     ? JSON.parse(loadedMessageIds)
+      //     : null;
+      const messages = await MessageModel.findAndCountAll({
         where: {
           roomId: roomId,
+          //   id: {
+          //     [Op.notIn]: loadedU,
+          //   }
         },
         include: {
           model: UserModel,
           as: "user",
         },
+
+        limit: limit,
+        offset: offset,
+        order: [["createdAt", "DESC"]],
       });
-      return messages.map((message) => {
-        const parsed = message.toJSON();
-        return {
-          ...parsed,
-          user: new UserDto(parsed.user),
-        };
-      });
+
+      return {
+        items: messages.rows.map((message) => {
+          const parsed = message.toJSON();
+          return {
+            ...parsed,
+            user: new UserDto(parsed.user),
+          };
+        }),
+        total: messages.count,
+      };
     }
 
     throw ApiError.BadRequest("У вас нет доступа к этой комнате");

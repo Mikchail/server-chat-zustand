@@ -1,10 +1,12 @@
 const express = require('express');
 const app = express();
+const server = require('http').Server(app)
 const cors = require("cors");
 const {initialRoles} = require("./initialTables");
 const port = process.env.PORT || 3000;
 const router = require('./routers');
 const multer = require('multer');
+const ioServer = require('./ioServer')(server, app)
 const upload = multer();
 var corsOptions = {
   origin: "http://localhost:5173"
@@ -17,6 +19,10 @@ app.use(express.json());
 // parse requests of content-type - application/x-www-form-urlencoded
 // app.use(express.urlencoded({ extended: false, limit: 10000 }));
 // Настройки подключения к базе данных
+app.use((req, res, next) => {
+  req.io = ioServer
+  return next()
+})
 app.use("/api", router);
 
 const db = require("./models");
@@ -42,6 +48,6 @@ db.sequelize.sync()
 //   });
 
 // Запуск сервера
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`Сервер запущен на порту ${port}`);
 });

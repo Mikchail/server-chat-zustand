@@ -7,9 +7,10 @@ class RoomController {
       const curentUserId = req.user.id;
       let roomName = name
       if(!name) {
-        roomName = "private"
+        roomName = "private with: " + req.user.name
       }
-      const room = await roomService.createRoom(roomName, curentUserId, userId);
+      const room = await roomService.createRoom(roomName, userId, curentUserId);
+      console.log({room});
       return res.json(room);
     } catch (err) {
       next(err);

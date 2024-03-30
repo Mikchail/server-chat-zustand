@@ -4,7 +4,40 @@ const RoomUser = require("../models").models.RoomUser;
 const Sequelize = require("sequelize");
 const { Op } = require("sequelize");
 
-const findRoomWithUsers = (userId) => {
+const findRoomWithUsers = (userId, currentUserId) => {
+  console.log({ userId, currentUserId });
+  //   return RoomModel.findOne({
+  //     include: [
+  //       {
+  //         model: UserModel,
+  //         as: "users",
+  //         where: {
+  //           id: {
+  //             [Op.in]: Sequelize.literal(`
+  //                 (SELECT "userId" FROM room_users WHERE "roomId" IN (SELECT "roomId" FROM room_users WHERE "userId" = ${userId}))
+  //                 AND "users"."id" = ${currentUserId}
+  //               `),
+  //           },
+  //         },
+  //       },
+  //   {
+  //     model: UserModel,
+  //     as: "users",
+  //     where: {
+  //       id: currentUserId,
+  //     },
+  //   },
+  // ],
+  // where: {
+  //   id: {
+  //     [Op.in]: Sequelize.literal(`
+  //         (SELECT "room_users"."roomId" FROM room_users WHERE "room_users"."userId" = ${userId})
+  //         INTERSECT
+  //         (SELECT "room_users"."roomId" FROM room_users WHERE "room_users"."userId" = ${currentUserId})
+  //       `),
+  //   },
+  // },
+  //   });
   return RoomModel.findOne({
     include: [
       {
@@ -17,8 +50,22 @@ const findRoomWithUsers = (userId) => {
         [Op.in]: Sequelize.literal(
           `(SELECT "room_users"."roomId" FROM room_users WHERE "room_users"."userId" = ${userId})`
         ),
+        //     [Op.in]: Sequelize.literal(
+        //       `(SELECT "room_users"."roomId" FROM room_users WHERE "room_users"."userId" = ${userId} AND "room_users"."userId" = ${currentUserId})`
+        //     ),
+        //     [Op.in]: Sequelize.literal(`
+        //   (SELECT "room_users"."roomId" FROM room_users WHERE "room_users"."userId" = ${userId})
+        //   INTERSECT
+        //   (SELECT "room_users"."roomId" FROM room_users WHERE "room_users"."userId" = ${currentUserId})
+        // `),
       },
     },
+  });
+};
+
+const findRoomByUserIds = (rooms) => {
+  rooms.forEach((r) => {
+    r.users.forEach((u) => console.log(u));
   });
 };
 
@@ -30,27 +77,30 @@ const addRoomForUser = async (userId, currentUserId, room) => {
 };
 class RoomService {
   async createRoom(name, currentUserId, userId) {
-    if (!name || !userId) {
+    if (!name || !userId || !currentUserId) {
       return { error: "нету данных" };
     }
 
     try {
-      const room = await findRoomWithUsers(userId);
+      const room = await findRoomWithUsers(userId, currentUserId);
+      //   findRoomByUserIds(rooms);
+      console.log("findRoomWithUsers", { room });
       if (room) {
         // GOVNO KOD
         const parsedroom = room.toJSON();
-        await addRoomForUser(userId, currentUserId, parsedroom)
-        return parsedroom
+        await addRoomForUser(userId, currentUserId, parsedroom);
+        return parsedroom;
       } else {
         const newRoom = await RoomModel.create({ name });
         const parsedNewRoom = newRoom.toJSON();
-        await addRoomForUser(userId, currentUserId, parsedNewRoom)
-        const room = await findRoomWithUsers(userId);
+        await addRoomForUser(userId, currentUserId, parsedNewRoom);
+        const room = await findRoomWithUsers(userId, currentUserId);
+        console.log("findRoomWithUsers room", room);
         const parsedroom = room.toJSON();
-        return parsedroom
+        return parsedroom;
       }
     } catch (error) {
-      console.log(error);
+      console.log("findRoomWithUsers", error);
     }
   }
 

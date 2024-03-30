@@ -7,7 +7,6 @@ class MessageController {
       const { text } = req.body;
       const { roomId } = req.params;
       const userId = req.user.id
-      console.log({roomId, text, userId});
       const message = await messageService.createMessage(text, userId, roomId)
       return res.json(message);
     } catch (err) {
@@ -19,8 +18,7 @@ class MessageController {
     try {
       const { roomId } = req.params;
       const userId = req.user.id
-      const messages = await messageService.getMessages(userId, roomId)
-      console.log({messages});
+      const messages = await messageService.getMessages({...req.query, userId, roomId})
       return res.json(messages);
     } catch (err) {
       console.log("err", err);
